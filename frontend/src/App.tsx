@@ -1,8 +1,13 @@
+import { Routes, Route } from "react-router-dom";
+import LoginPage from "./components/LoginPage";
+import SignUpPage from "./components/SingUpPage";
+
 function App() {
   return (
-    <>
-      <h1>Hello this is app</h1>
-    </>
+   <Routes>
+   <Route path="/"  element={<LoginPage/>}/>
+   <Route path="/signup"  element={<SignUpPage/>}/>
+   </Routes>
   );
 }
 
