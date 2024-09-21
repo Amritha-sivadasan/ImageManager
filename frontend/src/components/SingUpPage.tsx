@@ -1,8 +1,10 @@
-import React, { useState, FormEvent, ChangeEvent } from 'react';
-import { Eye, EyeOff, Mail, Phone, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, FormEvent, ChangeEvent } from "react";
+import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { sendOtp } from "../service/api/useApi";
+import { toast } from "react-hot-toast";
 
-interface SignUpFormData {
+export interface SignUpFormData {
   email: string;
   phoneNumber: string;
   password: string;
@@ -10,37 +12,49 @@ interface SignUpFormData {
 }
 
 const SignUpPage: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<SignUpFormData>({
-    email: '',
-    phoneNumber: '',
-    password: '',
-    confirmPassword: '',
+    email: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      toast.error("Passwords don't match!");
       return;
     }
-    console.log('Sign-up submitted:', formData);
-    // Here you would typically handle the sign-up logic
+    sessionStorage.setItem("email", formData.email);
+    sessionStorage.setItem("password", formData.password);
+    sessionStorage.setItem("phoneNumber", formData.phoneNumber);
+
+    const response = await sendOtp(formData.email);
+    if (response && response.success) {
+      navigate("/otp-page");
+    } else {
+      toast.error(response.message);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96 transform transition-all hover:scale-102 duration-300">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Create an Account</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+          Create an Account
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <Mail className="absolute top-3 left-3 h-5 w-5 text-blue-500" />
@@ -88,7 +102,11 @@ const SignUpPage: React.FC = () => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
             >
-              {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+              {showPassword ? (
+                <EyeOff className="h-5 w-5 text-gray-400" />
+              ) : (
+                <Eye className="h-5 w-5 text-gray-400" />
+              )}
             </button>
           </div>
           <div className="relative">
@@ -109,7 +127,11 @@ const SignUpPage: React.FC = () => {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
             >
-              {showConfirmPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+              {showConfirmPassword ? (
+                <EyeOff className="h-5 w-5 text-gray-400" />
+              ) : (
+                <Eye className="h-5 w-5 text-gray-400" />
+              )}
             </button>
           </div>
           <div>
@@ -123,8 +145,11 @@ const SignUpPage: React.FC = () => {
         </form>
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/" className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-300">
+            Already have an account?{" "}
+            <Link
+              to="/"
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-300"
+            >
               Sign in
             </Link>
           </p>

@@ -1,13 +1,18 @@
-import React, { useState, FormEvent, ChangeEvent } from "react";
+import React, { useState, FormEvent, ChangeEvent, useContext } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../service/api/useApi";
+import toast from "react-hot-toast";
+import { userContext } from "../context/context";
 
-interface LoginFormData {
+export interface LoginFormData {
   email: string;
   password: string;
 }
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { login }=useContext(userContext)
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -22,9 +27,27 @@ const LoginPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Login submitted:", formData);
+    if (!formData.email) {
+      toast.error("Please fill the Email field");
+      return;
+    }
+    if (!formData.password || formData.password.length < 8) {
+      toast.error("Please fill the Valid Password ");
+      return;
+    }
+    const response = await loginUser(formData);
+       
+    if (response.success) {
+    
+      localStorage.setItem("userAuth", "true");
+      localStorage.setItem("accessToken", response.accessToken);
+      login()
+      navigate("/");
+    } else {
+      toast.error(response.message);
+    }
   };
 
   return (
