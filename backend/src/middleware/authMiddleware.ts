@@ -2,7 +2,7 @@ import { validateToken } from "../utils/jwtGenerate";
 import { Request, Response, NextFunction } from "express";
 import { JwtPayload } from "jsonwebtoken";
 
-interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Request {
     user?: string | JwtPayload; 
   }
 
