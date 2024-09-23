@@ -1,14 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { Lock } from "lucide-react";
-import { register, verifyOtp } from "../service/api/useApi";
+import { register, sendOtp, verifyOtp } from "../service/api/useApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { userContext } from "../context/context";
 
 const OtpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signup } = useContext(userContext);
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
   const [isValid, setIsValid] = useState<boolean>(true);
-  const [timer, setTimer] = useState<number>(30);
+  const [timer, setTimer] = useState<number>(10);
   const [canResend, setCanResend] = useState<boolean>(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -65,7 +67,7 @@ const OtpPage: React.FC = () => {
       const password = sessionStorage.getItem("password");
       const phoneNumber = sessionStorage.getItem("phoneNumber");
       const response = await verifyOtp(otpValue, email!);
-      console.log("response", response);
+
       if (response.success) {
         const registerResponse = await register(
           email!,
@@ -75,8 +77,12 @@ const OtpPage: React.FC = () => {
 
         if (registerResponse.success) {
           sessionStorage.clear();
-          localStorage.setItem('userAuth',"true")
-          localStorage.setItem("accessToken", registerResponse.data.accessToken)
+          localStorage.setItem("userAuth", "true");
+          localStorage.setItem(
+            "accessToken",
+            registerResponse.accessToken
+          );
+          signup();
           navigate("/");
         } else {
           toast(registerResponse.message);
@@ -93,12 +99,11 @@ const OtpPage: React.FC = () => {
   const handleResendOtp = async () => {
     if (!canResend) return;
 
-    // Implement your resend OTP logic here
-    // For example:
-    // const email = sessionStorage.getItem("email");
-    // await resendOtp(email!);
+    const email = sessionStorage.getItem("email");
+    const response = await sendOtp(email!);
+    console.log("response", response);
 
-    setTimer(30);
+    setTimer(10);
     setCanResend(false);
     toast.success("OTP resent successfully");
   };

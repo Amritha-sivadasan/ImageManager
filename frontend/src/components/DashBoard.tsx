@@ -1,132 +1,165 @@
-import React, { useState, useCallback } from 'react';
-import { Upload, Image as ImageIcon, BarChart2 } from 'lucide-react';
+import React, { useState, useCallback } from "react";
 
-interface ImageFile extends File {
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
+import { uploadImage } from "../service/api/imageApi";
+import { Upload, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface ImageFile {
+  file: File;
+  id: string;
   preview: string;
+  title: string;
 }
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [images, setImages] = useState<ImageFile[]>([]);
-  const [dragActive, setDragActive] = useState<boolean>(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setImages(prevImages => [
+    setImages((prevImages) => [
       ...prevImages,
-      ...acceptedFiles.map(file => Object.assign(file, {
-        preview: URL.createObjectURL(file)
-      }))
+      ...acceptedFiles.map((file) => ({
+        file,
+        id: Math.random().toString(36).substring(7),
+        preview: URL.createObjectURL(file),
+        title: file.name,
+      })),
     ]);
   }, []);
 
-  const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(images);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setImages(items);
+  };
+
+  const handleTitleChange = (id: string, newTitle: string) => {
+    setImages(
+      images.map((img) => (img.id === id ? { ...img, title: newTitle } : img))
+    );
+  };
+
+  const handleUpload = async () => {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append("images", image.file);
+      formData.append("titles", image.title);
+    });
+
+    try {
+      const response = await uploadImage(formData);
+      console.log("Upload successful", response);
+      navigate("/uploaded-image");
+    } catch (error) {
+      console.error("Upload failed", error);
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onDrop(Array.from(e.dataTransfer.files));
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      onDrop(Array.from(e.target.files));
-    }
+  const removeImage = (id: string) => {
+    setImages(images.filter((img) => img.id !== id));
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Image Upload Dashboard</h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Stats */}
-          <div className="col-span-1 md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow flex items-center">
-              <div className="bg-blue-500 p-3 rounded-full mr-4">
-                <ImageIcon className="text-white" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Images</p>
-                <p className="text-2xl font-bold">{images.length}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow flex items-center">
-              <div className="bg-green-500 p-3 rounded-full mr-4">
-                <Upload className="text-white" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Uploaded Today</p>
-                <p className="text-2xl font-bold">0</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow flex items-center">
-              <div className="bg-purple-500 p-3 rounded-full mr-4">
-                <BarChart2 className="text-white" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Storage Used</p>
-                <p className="text-2xl font-bold">0 MB</p>
-              </div>
-            </div>
-          </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        Image Upload Dashboard
+      </h1>
 
-          {/* Upload Area */}
-          <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Upload Images</h2>
-            <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                multiple
-                onChange={handleChange}
-                accept="image/*"
-                className="hidden"
-                id="image-upload"
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <Upload className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-gray-600">Drag and drop your images here, or click to select files</p>
-              </label>
-            </div>
-          </div>
-
-          {/* Recent Uploads */}
-          <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Recent Uploads</h2>
-            {images.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.slice(-6).map((file, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <img 
-                      src={file.preview} 
-                      alt={`Upload ${index}`}
-                      className="w-full h-full object-cover rounded"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center">No images uploaded yet</p>
-            )}
-          </div>
-        </div>
+      <div
+        onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+          e.preventDefault();
+          onDrop(Array.from(e.dataTransfer.files));
+        }}
+        onDragOver={(e: React.DragEvent<HTMLDivElement>) => e.preventDefault()}
+        className="border-dashed border-2 border-blue-300 rounded-lg p-4 mb-4 text-center cursor-pointer transition-all hover:bg-blue-50 w-64 mx-auto"
+      >
+        <Upload className="mx-auto text-blue-500 mb-2" size={36} />
+        <p className="text-gray-600 mb-1 text-sm">
+          Drag & drop images here or click to select
+        </p>
+        <input
+          type="file"
+          multiple
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files) {
+              onDrop(Array.from(e.target.files));
+            }
+          }}
+          className="hidden"
+          id="fileInput"
+        />
+        <label
+          htmlFor="fileInput"
+          className="inline-block px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors cursor-pointer text-sm"
+        >
+          Select Files
+        </label>
       </div>
+
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="images" direction="horizontal">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex flex-wrap gap-4 mt-10"
+            >
+              {images.map((image, index) => (
+                <Draggable key={image.id} draggableId={image.id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="relative group"
+                    >
+                      <div className="w-40 h-48 bg-white shadow-md rounded-lg overflow-hidden">
+                        <img
+                          src={image.preview}
+                          alt={image.title}
+                          className="w-full h-32 object-cover"
+                        />
+                        <input
+                          type="text"
+                          value={image.title}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleTitleChange(image.id, e.target.value)
+                          }
+                          className="w-full p-2 text-sm"
+                        />
+                      </div>
+                      <button
+                        onClick={() => removeImage(image.id)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+
+      {images.length > 0 && (
+        <button
+          onClick={handleUpload}
+          className="mt-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+        >
+          Upload Images
+        </button>
+      )}
     </div>
   );
 };

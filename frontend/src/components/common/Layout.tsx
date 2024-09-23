@@ -8,11 +8,11 @@ interface LayoutProbs {
 
 const Layout: React.FC<LayoutProbs> = ({ children }) => {
   return (
-    <>
-      <Header />
-      <main>{children}</main>
-      <Footer/>
-    </>
+    <div className="flex flex-col min-h-screen">
+    <Header />
+    <main className="flex-grow">{children}</main>
+    <Footer />
+  </div>
   );
 };
 

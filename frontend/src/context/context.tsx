@@ -4,6 +4,7 @@ interface UserContextType {
   user: string;
   logout: () => void;
   login: () => void;
+  signup:()=>void
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -11,6 +12,7 @@ export const userContext = createContext<UserContextType>({
   user: "",
   logout: () => {},
   login: () => {},
+  signup:()=>{}
 });
 
 interface UserContextProviderProps {
@@ -33,6 +35,10 @@ export const UserContextProvider: React.FC<UserContextProviderProps> = ({
     setUserAuth("");
     localStorage.clear();
   };
+  const signup=()=>{
+    const storedUser = localStorage.getItem("userAuth");
+    setUserAuth(storedUser!);
+  }
 
   const login = () => {
     const storedUser = localStorage.getItem("userAuth");
@@ -40,7 +46,7 @@ export const UserContextProvider: React.FC<UserContextProviderProps> = ({
   };
 
   return (
-    <userContext.Provider value={{ user: userAuth, logout, login }}>
+    <userContext.Provider value={{ user: userAuth, logout, login,signup }}>
       {children}
     </userContext.Provider>
   );

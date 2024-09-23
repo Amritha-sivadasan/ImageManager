@@ -46,18 +46,45 @@ export const verifyOtp = async (otp: string, email: string) => {
     console.log("response for verify otp", response);
     return response.data;
   } catch (error) {
-  
     return (error as Error).response?.data;
   }
 };
 
-
-export const loginUser  = async(data:LoginFormData)=>{
+export const loginUser = async (data: LoginFormData) => {
   try {
-    const response = await axios.post(`${API_URl}/login`,data);
+    const response = await axios.post(`${API_URl}/login`, data);
+    return response.data;
+  } catch (error) {
+    return (error as Error).response?.data;
+  }
+};
+
+export const sendPasswordResetEmail = async (email: string) => {
+  try {
+    const response = await axios.post(`${API_URl}/forgot-password`, { email });
+    return response.data;
+  } catch (error) {
+    return (error as Error).response?.data;
+  }
+};
+
+export const validateResetToken = async (token: string) => {
+  try {
+    const response= await axios.get(`${API_URl}/validateToken/${token}`)
+
+    return response.data;
+  } catch (error) {
+    return (error as Error).response?.data;
+  }
+};
+
+ export const resetPassword = async( token:string ,newPassword:string,)=>{
+  try {
+    const response= await axios.post(`${API_URl}/resetPassword`,{token,newPassword})
+
     return response.data;
     
   } catch (error) {
     return (error as Error).response?.data;
   }
-}
+ }
