@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Otp } from "../model/otpModel";
-import { IOtp } from "../model/otpModel";
+
 import User from "../model/userModel";
 import { generateOtp } from "../utils/otp-generatot";
 import { sendOtp } from "../utils/nodemailer";
@@ -9,7 +9,7 @@ class OtpController {
   public sendOtptoUser = async (req: Request, res: Response) => {
     try {
       const { email } = req.body;
-      console.log(email)
+
       const existEmail = await User.findOne({ email });
       if (existEmail) {
         res.status(409).json({
@@ -20,11 +20,7 @@ class OtpController {
       }
 
       const otp = await generateOtp();
-      const newOtp = new Otp({
-        email,
-        otp: otp,
-      });
-      await newOtp.save();
+      await Otp.updateOne({ email }, { $set: { otp } }, {upsert: true })
      await sendOtp(email, otp);
 
       res.status(200).json({ message: "Otp send successfully", success: true });
