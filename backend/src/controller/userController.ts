@@ -96,7 +96,7 @@ class UserController {
       }
 
       const accessToken = createResetToken(existUser._id);
-      const context = `http://localhost:5173/resetPassword/${accessToken}`;
+      const context = `https://image-manager-drab.vercel.app/resetPassword/${accessToken}`;
 
       await SendToMail(email, context);
 
