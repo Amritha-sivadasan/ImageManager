@@ -32,7 +32,7 @@ export async function SendToMail(email: string, context: string): Promise<void> 
   const mailOptions = {
     from: process.env.NODE_MAILER_EMAIL,
     to: email,
-    subject: "Otp Created For your Image Manger",
+    subject: "Reset Password link is here",
     text: context,
   };
 
