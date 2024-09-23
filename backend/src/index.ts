@@ -9,7 +9,7 @@ import path from "path";
 dotenv.config();
 connect();
 const app: Express = express();
-app.use(cors({origin: process.env.FRONT_END_URL, credentials: true,}));
+app.use(cors({origin: process.env.FRONT_END_URL, methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true,}));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(morgan('dev'))
