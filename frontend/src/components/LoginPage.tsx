@@ -32,11 +32,11 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.email) {
-      toast.error("Please fill the Email field");
+      toast.error("Invalid Credential");
       return;
     }
     if (!formData.password || formData.password.length < 8) {
-      toast.error("Please fill the Valid Password ");
+      toast.error("Invalid Credential");
       return;
     }
 
