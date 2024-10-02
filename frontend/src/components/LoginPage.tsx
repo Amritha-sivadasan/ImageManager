@@ -13,8 +13,8 @@ export interface LoginFormData {
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login }=useContext(userContext)
-  const [loading, setLoading] = useState<boolean>(false); 
+  const { login } = useContext(userContext);
+  const [loading, setLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -40,26 +40,23 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await loginUser(formData);
-       
+
       if (response.success) {
-      
         localStorage.setItem("userAuth", "true");
         localStorage.setItem("accessToken", response.accessToken);
-        login()
+        login();
         navigate("/");
       } else {
         toast.error(response.message);
       }
     } catch (error) {
       console.log(error);
-      
-    }finally{
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
-   
   };
 
   return (
@@ -125,8 +122,7 @@ const LoginPage: React.FC = () => {
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {loading?<ClipLoader size={20}/> : "Sign In"}
-              
+              {loading ? <ClipLoader size={18} /> : "Sign In"}
             </button>
           </div>
         </form>
