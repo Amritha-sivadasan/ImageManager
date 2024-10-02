@@ -9,6 +9,7 @@ import {
 import { uploadImage } from "../service/api/imageApi";
 import { Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ClipLoader from "react-spinners/ClipLoader";
 
 interface ImageFile {
   file: File;
@@ -20,6 +21,7 @@ interface ImageFile {
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setImages((prevImages) => [
@@ -41,6 +43,16 @@ const Dashboard: React.FC = () => {
     setImages(items);
   };
 
+  const validateFiles = (files: File[]) => {
+    const validImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ]; // Add more types if needed
+    return files.filter((file) => validImageTypes.includes(file.type));
+  };
+
   const handleTitleChange = (id: string, newTitle: string) => {
     setImages(
       images.map((img) => (img.id === id ? { ...img, title: newTitle } : img))
@@ -48,6 +60,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    setLoading(true);
     const formData = new FormData();
     images.forEach((image) => {
       formData.append("images", image.file);
@@ -60,6 +73,8 @@ const Dashboard: React.FC = () => {
       navigate("/uploaded-image");
     } catch (error) {
       console.error("Upload failed", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,7 +105,11 @@ const Dashboard: React.FC = () => {
           multiple
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             if (e.target.files) {
-              onDrop(Array.from(e.target.files));
+              const files = Array.from(e.target.files);
+              const imageFiles = validateFiles(files);
+              if (imageFiles.length > 0) {
+                onDrop(imageFiles);
+              }
             }
           }}
           className="hidden"
@@ -155,9 +174,9 @@ const Dashboard: React.FC = () => {
       {images.length > 0 && (
         <button
           onClick={handleUpload}
-          className="mt-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          className="mt-6 px-6 py-3 w-48 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
         >
-          Upload Images
+          {loading ? <ClipLoader size={20} /> : "Upload Images"}
         </button>
       )}
     </div>

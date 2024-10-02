@@ -6,6 +6,7 @@ import {
   deleteImage,
 } from "../service/api/imageApi";
 import Swal from "sweetalert2";
+import ClipLoader from "react-spinners/ClipLoader";
 
 interface ImageData {
   _id: string;
@@ -21,6 +22,7 @@ const UploadedImage: React.FC = () => {
   const [editingImage, setEditingImage] = useState<ImageData | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState<boolean>(false); 
 
   useEffect(() => {
     fetchImages();
@@ -69,7 +71,9 @@ const UploadedImage: React.FC = () => {
   };
   const handleUpdate = async () => {
     if (!editingImage) return;
-    const isTitleChanged = newTitle.trim() !== editingImage.title;
+    setLoading(true)
+    try {
+       const isTitleChanged = newTitle.trim() !== editingImage.title;
     const isImageChanged = newImageFile !== null;
 
     if (!isTitleChanged && !isImageChanged) {
@@ -93,6 +97,13 @@ const UploadedImage: React.FC = () => {
     } catch (error) {
       console.error("Error updating image:", error);
     }
+    } catch (error) {
+      console.log(error);
+      
+    }finally{
+      setLoading(false)
+    }
+   
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,9 +182,11 @@ const UploadedImage: React.FC = () => {
             />
             <button
               onClick={handleUpdate}
+              disabled={loading}
               className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
             >
-              Update
+              {loading ? <ClipLoader/>:"Update"}
+              
             </button>
           </div>
         </div>

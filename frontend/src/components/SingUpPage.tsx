@@ -1,8 +1,10 @@
-import React, { useState, FormEvent, ChangeEvent } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { sendOtp } from "../service/api/useApi";
 import { toast } from "react-hot-toast";
+import ClipLoader from "react-spinners/ClipLoader";
 
 export interface SignUpFormData {
   email: string;
@@ -13,39 +15,41 @@ export interface SignUpFormData {
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<SignUpFormData>({
-    email: "",
-    phoneNumber: "",
-    password: "",
-    confirmPassword: "",
-  });
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<SignUpFormData>();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
+  const onSubmit = async (data: SignUpFormData) => {
+    if (data.password !== data.confirmPassword) {
       toast.error("Passwords don't match!");
       return;
     }
-    sessionStorage.setItem("email", formData.email);
-    sessionStorage.setItem("password", formData.password);
-    sessionStorage.setItem("phoneNumber", formData.phoneNumber);
+    setLoading(true);
 
-    const response = await sendOtp(formData.email);
-    if (response && response.success) {
-      navigate("/otp-page");
-    } else {
-      toast.error(response.message);
+    try {
+      sessionStorage.setItem("email", data.email);
+      sessionStorage.setItem("password", data.password);
+      sessionStorage.setItem("phoneNumber", data.phoneNumber);
+
+      const response = await sendOtp(data.email);
+      if (response && response.success) {
+        navigate("/otp-page");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("Something went wrong!");
+      console.log("err", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,47 +59,66 @@ const SignUpPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
           Create an Account
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="relative">
             <Mail className="absolute top-3 left-3 h-5 w-5 text-blue-500" />
             <input
               type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
+                  message: "Invalid email address",
+                },
+              })}
               className="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
                 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-800"
               placeholder="Enter your email"
-              required
             />
+            {errors.email && (
+              <span className="text-red-500 text-sm">
+                {errors.email.message}
+              </span>
+            )}
           </div>
+
           <div className="relative">
             <Phone className="absolute top-3 left-3 h-5 w-5 text-blue-500" />
             <input
               type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
+              {...register("phoneNumber", {
+                required: "Phone number is required",
+                pattern: {
+                  value: /^[0-9]{10}$/,
+                  message: "Invalid phone number format",
+                },
+              })}
               className="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
                 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-800"
               placeholder="Enter your phone number"
-              required
             />
+            {errors.phoneNumber && (
+              <span className="text-red-500 text-sm">
+                {errors.phoneNumber.message}
+              </span>
+            )}
           </div>
+
           <div className="relative">
             <Lock className="absolute top-3 left-3 h-5 w-5 text-blue-500" />
             <input
               type={showPassword ? "text" : "password"}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
+              minLength={6}
+              {...register("password", {
+                required: "Password is required",
+
+                validate: (value) =>
+                  value.trim().length > 0 ||
+                  "Password cannot be empty or just spaces",
+              })}
               className="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
                 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-800"
               placeholder="Enter your password"
-              required
             />
             <button
               type="button"
@@ -108,19 +131,25 @@ const SignUpPage: React.FC = () => {
                 <Eye className="h-5 w-5 text-gray-400" />
               )}
             </button>
+            {errors.password && (
+              <span className="text-red-500 text-sm">
+                {errors.password.message}
+              </span>
+            )}
           </div>
+
           <div className="relative">
             <Lock className="absolute top-3 left-3 h-5 w-5 text-blue-500" />
             <input
               type={showConfirmPassword ? "text" : "password"}
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
+              {...register("confirmPassword", {
+                required: "Confirm password is required",
+                validate: (value) =>
+                  value === watch("password") || "Passwords don't match",
+              })}
               className="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
                 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-800"
               placeholder="Confirm your password"
-              required
             />
             <button
               type="button"
@@ -133,16 +162,24 @@ const SignUpPage: React.FC = () => {
                 <Eye className="h-5 w-5 text-gray-400" />
               )}
             </button>
+            {errors.confirmPassword && (
+              <span className="text-red-500 text-sm">
+                {errors.confirmPassword.message}
+              </span>
+            )}
           </div>
+
           <div>
             <button
               type="submit"
+              disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
             >
-              Sign Up
+              {loading ? <ClipLoader color="#fff" size={24} /> : "Sign Up"}
             </button>
           </div>
         </form>
+
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{" "}

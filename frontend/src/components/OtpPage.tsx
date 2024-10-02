@@ -4,6 +4,8 @@ import { register, sendOtp, verifyOtp } from "../service/api/useApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { userContext } from "../context/context";
+import ClipLoader from "react-spinners/ClipLoader";
+
 
 const OtpPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ const OtpPage: React.FC = () => {
   const [timer, setTimer] = useState<number>(10);
   const [canResend, setCanResend] = useState<boolean>(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [loading, setLoading] = useState<boolean>(false); 
 
   useEffect(() => {
     if (inputRefs.current[0]) {
@@ -61,12 +64,15 @@ const OtpPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const otpValue = otp.join("");
+setLoading(true)
+    try {
+       const otpValue = otp.join("");
     if (otpValue.length === 4) {
       const email = sessionStorage.getItem("email");
       const password = sessionStorage.getItem("password");
       const phoneNumber = sessionStorage.getItem("phoneNumber");
       const response = await verifyOtp(otpValue, email!);
+
 
       if (response.success) {
         const registerResponse = await register(
@@ -78,10 +84,7 @@ const OtpPage: React.FC = () => {
         if (registerResponse.success) {
           sessionStorage.clear();
           localStorage.setItem("userAuth", "true");
-          localStorage.setItem(
-            "accessToken",
-            registerResponse.accessToken
-          );
+          localStorage.setItem("accessToken", registerResponse.accessToken);
           signup();
           navigate("/");
         } else {
@@ -94,6 +97,14 @@ const OtpPage: React.FC = () => {
     } else {
       setIsValid(false);
     }
+    } catch (error) {
+      toast.error('somthing went wrong')
+      console.log(error);
+      
+    }finally{
+      setLoading(false)
+    }
+   
   };
 
   const handleResendOtp = async () => {
@@ -150,9 +161,11 @@ const OtpPage: React.FC = () => {
           )}
           <button
             type="submit"
+            disabled={loading}
             className="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 transform hover:scale-105"
           >
-            Verify OTP
+            {loading?<ClipLoader/> : "Verify OTP"}
+            
           </button>
         </form>
         <p className="mt-4 text-center text-gray-600">

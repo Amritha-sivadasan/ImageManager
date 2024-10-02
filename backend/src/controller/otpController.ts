@@ -22,7 +22,7 @@ class OtpController {
       const otp = await generateOtp();
       await Otp.updateOne({ email }, { $set: { otp } }, {upsert: true })
      await sendOtp(email, otp);
-
+      
       res.status(200).json({ message: "Otp send successfully", success: true });
     } catch (error) {
       console.log('eroor',error);

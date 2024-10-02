@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../service/api/useApi";
 import toast from "react-hot-toast";
 import { userContext } from "../context/context";
+import ClipLoader from "react-spinners/ClipLoader";
 
 export interface LoginFormData {
   email: string;
@@ -13,6 +14,7 @@ export interface LoginFormData {
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login }=useContext(userContext)
+  const [loading, setLoading] = useState<boolean>(false); 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -37,17 +39,27 @@ const LoginPage: React.FC = () => {
       toast.error("Please fill the Valid Password ");
       return;
     }
-    const response = await loginUser(formData);
+
+    setLoading(true)
+    try {
+      const response = await loginUser(formData);
        
-    if (response.success) {
-    
-      localStorage.setItem("userAuth", "true");
-      localStorage.setItem("accessToken", response.accessToken);
-      login()
-      navigate("/");
-    } else {
-      toast.error(response.message);
+      if (response.success) {
+      
+        localStorage.setItem("userAuth", "true");
+        localStorage.setItem("accessToken", response.accessToken);
+        login()
+        navigate("/");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      console.log(error);
+      
+    }finally{
+      setLoading(false)
     }
+   
   };
 
   return (
@@ -113,7 +125,8 @@ const LoginPage: React.FC = () => {
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Sign In
+              {loading?<ClipLoader/> : "Sign In"}
+              
             </button>
           </div>
         </form>
